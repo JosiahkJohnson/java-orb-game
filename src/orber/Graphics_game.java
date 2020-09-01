@@ -106,7 +106,7 @@ class Game extends JFrame implements KeyListener
 			rasterGraphics.drawString(instructions, (WIDTH/2)-(instructions.length()*5), (HEIGHT/2)-100);
 			rasterGraphics.drawString(escape, (WIDTH/2)-instructions.length()*3, (HEIGHT/2)+100);
 			long time = System.currentTimeMillis();
-			player1.draw(rasterGraphics, orbsStep1);
+			player1.draw(rasterGraphics, false, false, false, true, orbsStep1);
 			for (Orb j : orbsStep1)
 			{
 				j.draw(rasterGraphics, orbsStep1);
@@ -132,7 +132,7 @@ class Game extends JFrame implements KeyListener
 			rasterGraphics.setFont(scoreFont);
 			rasterGraphics.drawString(instructions, (WIDTH/2)-(instructions.length()*5), (HEIGHT/2)-100);
 			long time = System.currentTimeMillis();
-			player1.draw(rasterGraphics, orbsStep2);
+			player1.draw(rasterGraphics, false, false, false, true, orbsStep2);
 			for (Orb j : orbsStep2)
 			{
 				j.draw(rasterGraphics, orbsStep2);
@@ -160,7 +160,7 @@ class Game extends JFrame implements KeyListener
 			rasterGraphics.drawString(instructions, (WIDTH/2)-(instructions.length()*5), (HEIGHT/2)-100);
 			rasterGraphics.drawString(escape, (WIDTH/2)-instructions.length()*3, (HEIGHT/2)+100);
 			long time = System.currentTimeMillis();
-			player1.draw(rasterGraphics, orbsStep3);
+			player1.draw(rasterGraphics, false, false, false, true, orbsStep3);
 			for (Orb j : orbsStep3)
 			{
 				j.draw(rasterGraphics, orbsStep3);
@@ -178,7 +178,7 @@ class Game extends JFrame implements KeyListener
 		player1.setImmune(false);
 		player1.setImmuneTimer(0);
 		player1.setMultiplier(3);
-		player1.setSpeed(10);
+		player1.setSpeed(5);
 	}
 	//The main game in the program
 	public void play()
@@ -195,9 +195,9 @@ class Game extends JFrame implements KeyListener
 		long playTime = 0;
 		//helps make the game harder as it goes on by adding more time between the delete orbs appearing
 		int progression = 15000;
-		//time until the next upgrade orb
+		//time untill the next upgrade orb
 		long nextUpgrade = (long)Math.ceil(Math.random()*10000);
-		//time until the next delete orb
+		//time untill the next delete orb
 		long nextDelete = (long)Math.ceil(Math.random()*progression);
 		//puts the next blue orb on the screen, every one second of play. Also handles increasing the player's score every second they survive.
 		int eventTimer = 0;
@@ -206,8 +206,7 @@ class Game extends JFrame implements KeyListener
 		{
 			long time = System.currentTimeMillis();
 			//handles player movement and interaction with the other objects
-			player1.momentumChange(up, down, left, right);
-			player1.draw(rasterGraphics, orbs);
+			player1.draw(rasterGraphics, up, down, left, right, orbs);
 			for (Orb i : orbs)
 			{
 				i.draw(rasterGraphics, orbs);
@@ -253,7 +252,7 @@ class Game extends JFrame implements KeyListener
 				if(player1.getImmuneTimer() < 0)
 				{
 					player1.setImmune(false);
-					player1.setSpeed(10);
+					player1.setSpeed(5);
 				}
 				//lowers the immunity timer
 				player1.setImmuneTimer(player1.getImmuneTimer()- (int)deltaTime);
@@ -326,7 +325,6 @@ class Game extends JFrame implements KeyListener
 			enter = false;
 		}
 	}
-	
 	//not used
 	public void keyTyped(KeyEvent e) {}
 	//used to make the newly created orbs have a random speed and direction.
@@ -371,67 +369,28 @@ class Player
 	private int size = 40;
 	private int multiplier = 3;
 	private boolean immune = false;
-	private int speed = 10;
+	private int speed = 5;
 	private int immuneTimer = 0;
-	private int playerVup = 0;
-	private int playerVdown = 0;
-	private int playerVleft = 0;
-	private int playerVright = 0;
 	
 	//used again because I found it to be very useful for screen size calculations
 	static Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 	public static final int WIDTH = (int)dim.getWidth(), HEIGHT = (int)dim.getHeight();
 	
-	//adjusts momentum based on the player's key press and max speed, lowers it if key isn't pressed.
-	
-	public void momentumChange(boolean up, boolean down, boolean left, boolean right)
-	{
-		if (up == true) // && locationY > 5)
-		{	if (playerVup < speed)
-				playerVup++;
-		}
-		else
-			if (playerVup > 0)
-				playerVup--;
-		if (down == true) // && locationY > HEIGHT - 5 - getSize())
-		{	if (playerVdown < speed)
-				playerVdown++;
-		}
-		else
-			if (playerVdown > 0)
-				playerVdown--;
-		if (left == true) // && locationX > 5)
-		{	if (playerVleft < speed)
-				playerVleft++;
-		}
-		else
-			if (playerVleft > 0)
-				playerVleft--;
-		if (right == true) // && locationX > WIDTH - 5 - getSize())
-		{	if (playerVright < speed)
-				playerVright++;
-		}
-		else
-			if (playerVright > 0)
-				playerVright--;
-	}
-	
 	//draws the player and handles collision with the edges and orbs
-	
-	public void draw(Graphics g, ArrayList<Orb> orbs)
+	public void draw(Graphics g, boolean up, boolean down, boolean left, boolean right, ArrayList<Orb> orbs)
 	{
 		g.setColor(Color.cyan);
 		g.fillRect(locationX, locationY, getSize(), getSize());
 		//handles player collision with orbs
 		checkCollision(orbs, g);
-		if(locationY > 5)
-			locationY -= playerVup;
-		if(locationY < HEIGHT - 5 - getSize())
-			locationY += playerVdown;
-		if(locationX > 0)
-			locationX -= playerVleft;
-		if(locationX < WIDTH - 5 - getSize())
-			locationX += playerVright;
+		if(up == true && locationY > 5)
+			locationY -= getSpeed();
+		if(down == true && locationY < HEIGHT - 5 - getSize())
+			locationY += getSpeed();
+		if(left == true && locationX > 0)
+			locationX -= getSpeed();
+		if(right == true && locationX < WIDTH - 5 - getSize())
+			locationX += getSpeed();
 		//player is green when he is immune to the blue orbs.
 		if(immuneTimer > 2000)
 			g.setColor(Color.green);
@@ -487,7 +446,7 @@ class Player
 						setSize(50);
 					setImmune(true);
 					//giving the player a boost to speed
-					setSpeed(15);
+					setSpeed(10);
 					//setting the timer, or increasing it if the player is already under the effect as to not waste a possably rare orb
 					immuneTimer += 5000;
 				}
